@@ -25,10 +25,6 @@ public class CorrectorServicio {
             .orElseThrow(() -> new CorrectorNoEncontrado());
     }
 
-    public List<Corrector> obtenerCorrectoresPorNombre(String nombre) {
-        return correctorRepository.findByNombre(nombre);
-    }
-
     public Corrector aniadirCorrector(Corrector corrector) {
         corrector.setId(null);
         return correctorRepository.save(corrector);
@@ -39,12 +35,13 @@ public class CorrectorServicio {
     }
     public Corrector modificarCorrector(Long id, Corrector corrector) {
         Corrector existente = obtenerCorrectorPorId(id);
-        existente.setMaximasCorrecciones(corrector.getMaximasCorrecciones());
+        existente.setIdentificadorUsuario(corrector.getIdentificadorUsuario());
         existente.setTelefono(corrector.getTelefono());
         existente.setMaterias(corrector.getMaterias());
+        existente.setMaximasCorrecciones(corrector.getMaximasCorrecciones());
         correctorRepository.save(existente);
         return existente;
 
     }
 }
-}
+

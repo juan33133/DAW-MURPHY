@@ -9,6 +9,6 @@ import es.uma.informatica.daw.corrector.models.Corrector;
 
 @Repository
 public interface CorrectorRepository extends JpaRepository<Corrector, Long> {
-
-    public List<Corrector> findByNombre(String nombre);
+    List<Corrector> findByMateriasIdConvocatoria(Long idConvocatoria);
+    boolean existsByIdentificadorUsuario(Long identificadorUsuario);
 }

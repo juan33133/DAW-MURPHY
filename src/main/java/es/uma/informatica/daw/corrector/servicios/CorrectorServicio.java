@@ -12,8 +12,9 @@ import es.uma.informatica.daw.corrector.repositories.CorrectorRepository;
 public class CorrectorServicio {
 
     private CorrectorRepository correctorRepository;
+
     public CorrectorServicio(CorrectorRepository correctorRepository) {
-        this.correctorRepository = correctorRepository  ;
+        this.correctorRepository = correctorRepository;
     }
 
     public List<Corrector> obtenerTodosCorrectores() {
@@ -22,17 +23,19 @@ public class CorrectorServicio {
 
     public Corrector obtenerCorrectorPorId(Long id) {
         return correctorRepository.findById(id)
-            .orElseThrow(() -> new CorrectorNoEncontrado());
+                .orElseThrow(() -> new CorrectorNoEncontrado());
     }
 
     public Corrector aniadirCorrector(Corrector corrector) {
         corrector.setId(null);
         return correctorRepository.save(corrector);
     }
+
     public void eliminarCorrector(Long id) {
-        Corrector corrector = obtenerCorrectorPorId(id);
+        obtenerCorrectorPorId(id);
         correctorRepository.deleteById(id);
     }
+
     public Corrector modificarCorrector(Long id, Corrector corrector) {
         Corrector existente = obtenerCorrectorPorId(id);
         existente.setIdentificadorUsuario(corrector.getIdentificadorUsuario());
@@ -41,7 +44,13 @@ public class CorrectorServicio {
         existente.setMaximasCorrecciones(corrector.getMaximasCorrecciones());
         correctorRepository.save(existente);
         return existente;
+    }
 
+    public List<Corrector> obtenerCorrectoresPorConvocatoria(Long idConvocatoria) {
+        return correctorRepository.findByMateriasIdConvocatoria(idConvocatoria);
+    }
+
+    public boolean existePorIdentificadorUsuario(Long identificadorUsuario) {
+        return correctorRepository.existsByIdentificadorUsuario(identificadorUsuario);
     }
 }
-

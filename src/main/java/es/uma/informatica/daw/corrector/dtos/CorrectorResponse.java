@@ -1,5 +1,7 @@
 package es.uma.informatica.daw.corrector.dtos;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CorrectorNuevo {
+public class CorrectorResponse {
+    private Long id;
     private Long identificadorUsuario;
-    private Long identificadorConvocatoria;
     private String telefono;
-    private Materia materia;
     private Integer maximasCorrecciones;
+    private List<MateriaResponse> materias;
 }

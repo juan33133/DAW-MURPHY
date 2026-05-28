@@ -1,4 +1,4 @@
-package es.uma.informatica.daw.corrector;
+package es.uma.informatica.daw.corrector.controladores;
 
 import es.uma.informatica.daw.corrector.dtos.CorrectorNuevo;
 import es.uma.informatica.daw.corrector.dtos.CorrectorResponse;
@@ -25,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureTestRestTemplate
-public class CorrectorIntegracionTest {
+@DisplayName("Tests del CorrectorControlador")
+public class CorrectorControladorTest {
 
     @Autowired
     private RestClient remoteClient;

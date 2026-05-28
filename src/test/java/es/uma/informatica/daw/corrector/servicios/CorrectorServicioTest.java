@@ -1,4 +1,4 @@
-package es.uma.informatica.daw.corrector;
+package es.uma.informatica.daw.corrector.servicios;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -25,8 +25,6 @@ import es.uma.informatica.daw.corrector.excepciones.UsuarioYaExisteException;
 import es.uma.informatica.daw.corrector.models.Corrector;
 import es.uma.informatica.daw.corrector.models.MateriaEnConvocatoria;
 import es.uma.informatica.daw.corrector.repositories.CorrectorRepository;
-import es.uma.informatica.daw.corrector.servicios.ClienteMicroservicios;
-import es.uma.informatica.daw.corrector.servicios.CorrectorServicio;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Tests del CorrectorServicio")

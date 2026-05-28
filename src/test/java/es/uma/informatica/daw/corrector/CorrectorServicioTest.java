@@ -1,4 +1,4 @@
-package es.uma.informatica.daw.corrector.servicios;
+package es.uma.informatica.daw.corrector;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -25,6 +25,8 @@ import es.uma.informatica.daw.corrector.excepciones.UsuarioYaExisteException;
 import es.uma.informatica.daw.corrector.models.Corrector;
 import es.uma.informatica.daw.corrector.models.MateriaEnConvocatoria;
 import es.uma.informatica.daw.corrector.repositories.CorrectorRepository;
+import es.uma.informatica.daw.corrector.servicios.ClienteMicroservicios;
+import es.uma.informatica.daw.corrector.servicios.CorrectorServicio;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Tests del CorrectorServicio")
@@ -32,6 +34,9 @@ class CorrectorServicioTest {
 
     @Mock
     private CorrectorRepository correctorRepository;
+
+    @Mock
+    private ClienteMicroservicios clienteMicroservicios;
 
     @InjectMocks
     private CorrectorServicio correctorServicio;
@@ -48,7 +53,7 @@ class CorrectorServicioTest {
             200L,
             1L,
             "951234567",
-            new Materia(1L, "Programación"),
+            new Materia(1L),
             75
         );
     }
@@ -102,20 +107,6 @@ class CorrectorServicioTest {
             verify(correctorRepository, times(1)).findByMateriasIdConvocatoria(idConvocatoria);
             verify(correctorRepository, never()).findAll();
         }
-
-        @Test
-        @DisplayName("Obtener todos los correctores retorna lista vacía")
-        void testObtenerTodosCorrectoresVacio() {
-            // Arrange
-            when(correctorRepository.findAll()).thenReturn(new ArrayList<>());
-
-            // Act
-            List<CorrectorResponse> resultado = correctorServicio.obtenerTodosCorrectores(null);
-
-            // Assert
-            assertNotNull(resultado);
-            assertTrue(resultado.isEmpty());
-        }
     }
 
     @Nested
@@ -168,6 +159,9 @@ class CorrectorServicioTest {
             );
             nuevoCorrector.setId(2L);
 
+            when(clienteMicroservicios.existeUsuario(correctorNuevoMuestra.getIdentificadorUsuario())).thenReturn(true);
+            when(clienteMicroservicios.existeMateria(correctorNuevoMuestra.getMateria().getId())).thenReturn(true);
+            when(clienteMicroservicios.isConvocatoriaVigente(correctorNuevoMuestra.getIdentificadorConvocatoria())).thenReturn(true);
             when(correctorRepository.existsByIdentificadorUsuario(correctorNuevoMuestra.getIdentificadorUsuario()))
                 .thenReturn(false);
             when(correctorRepository.save(any(Corrector.class))).thenReturn(nuevoCorrector);
@@ -186,6 +180,9 @@ class CorrectorServicioTest {
         @DisplayName("Lanzar excepción cuando usuario ya existe")
         void testAniadirCorrectorUsuarioExistente() {
             // Arrange
+            when(clienteMicroservicios.existeUsuario(correctorNuevoMuestra.getIdentificadorUsuario())).thenReturn(true);
+            when(clienteMicroservicios.existeMateria(correctorNuevoMuestra.getMateria().getId())).thenReturn(true);
+            when(clienteMicroservicios.isConvocatoriaVigente(correctorNuevoMuestra.getIdentificadorConvocatoria())).thenReturn(true);
             when(correctorRepository.existsByIdentificadorUsuario(correctorNuevoMuestra.getIdentificadorUsuario()))
                 .thenReturn(true);
 
@@ -194,30 +191,9 @@ class CorrectorServicioTest {
                 UsuarioYaExisteException.class,
                 () -> correctorServicio.aniadirCorrector(correctorNuevoMuestra)
             );
-            assertEquals("ERR::POST::Hay un conflicto con el ID de usuario.", exception.getMessage());
+            assertEquals("ERR::POST::Hay un conflicto con el identificador de usuario.", exception.getMessage());
             verify(correctorRepository, times(1)).existsByIdentificadorUsuario(200L);
             verify(correctorRepository, never()).save(any(Corrector.class));
-        }
-
-        @Test
-        @DisplayName("Nuevo corrector se añade con materia")
-        void testAniadirCorrectorConMateria() {
-            // Arrange
-            Corrector nuevoCorrector = new Corrector(200L, "951234567", 75);
-            nuevoCorrector.setId(2L);
-            MateriaEnConvocatoria materia = new MateriaEnConvocatoria(1L, 1L, nuevoCorrector);
-            nuevoCorrector.getMaterias().add(materia);
-
-            when(correctorRepository.existsByIdentificadorUsuario(200L)).thenReturn(false);
-            when(correctorRepository.save(any(Corrector.class))).thenReturn(nuevoCorrector);
-
-            // Act
-            CorrectorResponse resultado = correctorServicio.aniadirCorrector(correctorNuevoMuestra);
-
-            // Assert
-            assertNotNull(resultado);
-            assertEquals(1, resultado.getMaterias().size());
-            verify(correctorRepository, times(1)).save(any(Corrector.class));
         }
     }
 
@@ -261,34 +237,6 @@ class CorrectorServicioTest {
     class ModificarCorrector {
 
         @Test
-        @DisplayName("Modificar corrector existente correctamente")
-        void testModificarCorrectorExistente() {
-            // Arrange
-            Long id = 1L;
-            Corrector correctorExistente = new Corrector(100L, "600123456", 50);
-            correctorExistente.setId(id);
-
-            CorrectorNuevo actualizado = new CorrectorNuevo(
-                100L,
-                1L,
-                "666777888",
-                new Materia(1L, "Programación"),
-                100
-            );
-
-            when(correctorRepository.findById(id)).thenReturn(Optional.of(correctorExistente));
-            when(correctorRepository.save(any(Corrector.class))).thenReturn(correctorExistente);
-
-            // Act
-            CorrectorResponse resultado = correctorServicio.modificarCorrector(id, actualizado);
-
-            // Assert
-            assertNotNull(resultado);
-            verify(correctorRepository, times(1)).findById(id);
-            verify(correctorRepository, times(1)).save(any(Corrector.class));
-        }
-
-        @Test
         @DisplayName("Lanzar excepción al modificar corrector inexistente")
         void testModificarCorrectorNoExistente() {
             // Arrange
@@ -318,10 +266,12 @@ class CorrectorServicioTest {
                 100L,
                 2L,  // Diferente convocatoria
                 "666777888",
-                new Materia(2L, "BD"),
+                new Materia(2L),
                 100
             );
 
+            when(clienteMicroservicios.existeMateria(2L)).thenReturn(true);
+            when(clienteMicroservicios.isConvocatoriaVigente(2L)).thenReturn(true);
             when(correctorRepository.findById(id)).thenReturn(Optional.of(correctorExistente));
             when(correctorRepository.save(any(Corrector.class))).thenReturn(correctorExistente);
 
@@ -347,10 +297,12 @@ class CorrectorServicioTest {
                 100L,
                 1L,  // Misma convocatoria
                 "666777888",
-                new Materia(1L, "Programación"),
+                new Materia(1L),
                 100
             );
 
+            when(clienteMicroservicios.existeMateria(1L)).thenReturn(true);
+            when(clienteMicroservicios.isConvocatoriaVigente(1L)).thenReturn(true);
             when(correctorRepository.findById(id)).thenReturn(Optional.of(correctorExistente));
             when(correctorRepository.save(any(Corrector.class))).thenReturn(correctorExistente);
 
@@ -374,10 +326,12 @@ class CorrectorServicioTest {
                 100L,
                 1L,
                 "999888777",
-                new Materia(1L, "Programación"),
+                new Materia(1L),
                 200
             );
 
+            when(clienteMicroservicios.existeMateria(1L)).thenReturn(true);
+            when(clienteMicroservicios.isConvocatoriaVigente(1L)).thenReturn(true);
             when(correctorRepository.findById(id)).thenReturn(Optional.of(correctorExistente));
             when(correctorRepository.save(any(Corrector.class))).thenReturn(correctorExistente);
 

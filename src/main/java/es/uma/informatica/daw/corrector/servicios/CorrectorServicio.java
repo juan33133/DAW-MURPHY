@@ -21,6 +21,9 @@ public class CorrectorServicio {
     @Autowired
     private CorrectorRepository correctorRepository;
 
+    @Autowired
+    private ClienteMicroservicios clienteMicroservicios;
+
     // GET /correctores
     @Transactional(readOnly = true)
     public List<CorrectorResponse> obtenerTodosCorrectores(Long idConvocatoria) {
@@ -44,8 +47,18 @@ public class CorrectorServicio {
     // POST /correctores
     @Transactional
     public CorrectorResponse aniadirCorrector(CorrectorNuevo correctorNuevo) {
+        if (!clienteMicroservicios.existeUsuario(correctorNuevo.getIdentificadorUsuario())) {
+            throw new IllegalArgumentException("ERR::POST::El usuario no existe.");
+        }
+        if (!clienteMicroservicios.existeMateria(correctorNuevo.getMateria().getId())) {
+            throw new IllegalArgumentException("ERR::POST::La materia no existe.");
+        }
+        if (!clienteMicroservicios.isConvocatoriaVigente(correctorNuevo.getIdentificadorConvocatoria())) {
+            throw new IllegalArgumentException("ERR::POST::La convocatoria no se encuentra vigente.");
+        }
+
         if (correctorRepository.existsByIdentificadorUsuario(correctorNuevo.getIdentificadorUsuario())) {
-            throw new UsuarioYaExisteException("ERR::POST::Hay un conflicto con el ID de usuario.");
+            throw new UsuarioYaExisteException("ERR::POST::Hay un conflicto con el identificador de usuario.");
         }
 
         Corrector corrector = CorrectorMapper.toEntity(correctorNuevo);
@@ -69,14 +82,21 @@ public class CorrectorServicio {
         Corrector corrector = correctorRepository.findById(id)
                 .orElseThrow(() -> new CorrectorNoEncontradoException("ERR::PUT::ID inexistente."));
 
-        corrector.setTelefono(correctorNuevo.getTelefono());
-        corrector.setMaximasCorrecciones(correctorNuevo.getMaximasCorrecciones());
+        if (!clienteMicroservicios.existeMateria(correctorNuevo.getMateria().getId())) {
+            throw new IllegalArgumentException("ERR::PUT::La materia no existe.");
+        }
+        if (!clienteMicroservicios.isConvocatoriaVigente(correctorNuevo.getIdentificadorConvocatoria())) {
+            throw new IllegalArgumentException("ERR::PUT::La convocatoria no se encuentra vigente.");
+        }
 
-        boolean existeConvocatoria = corrector.getMaterias().stream()
-                .anyMatch(m -> m.getIdConvocatoria().equals(correctorNuevo.getIdentificadorConvocatoria()));
-        if (!existeConvocatoria) {
+        boolean existeMateriaEnConvocatoria = corrector.getMaterias().stream()
+                .anyMatch(m -> m.getIdConvocatoria().equals(correctorNuevo.getIdentificadorConvocatoria()) && m.getIdMateria().equals(correctorNuevo.getMateria().getId()));
+        if (!existeMateriaEnConvocatoria) {
             corrector.getMaterias().add(CorrectorMapper.toMateriaRelacion(correctorNuevo, corrector));
         }
+
+        corrector.setTelefono(correctorNuevo.getTelefono());
+        corrector.setMaximasCorrecciones(correctorNuevo.getMaximasCorrecciones());
 
         return CorrectorMapper.toDTO(correctorRepository.save(corrector));
     }

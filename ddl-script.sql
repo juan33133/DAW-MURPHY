@@ -13,7 +13,7 @@
         id_corrector bigint,
         id_materia bigint not null,
         primary key (id),
-        unique (id_corrector, id_convocatoria)
+        unique (id_corrector, id_materia, id_convocatoria)
     );
 
     alter table if exists materias_en_convocatoria 

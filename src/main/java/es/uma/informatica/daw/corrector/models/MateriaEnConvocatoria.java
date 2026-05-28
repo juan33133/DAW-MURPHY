@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "materias_en_convocatoria",
-       uniqueConstraints = {@UniqueConstraint(columnNames = {"id_corrector", "id_convocatoria"})})
+       uniqueConstraints = {@UniqueConstraint(columnNames = {"id_corrector", "id_materia", "id_convocatoria"})})
 @Getter @Setter
 @NoArgsConstructor
 public class MateriaEnConvocatoria {
